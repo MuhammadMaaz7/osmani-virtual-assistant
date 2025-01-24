@@ -26,9 +26,9 @@ const SignupPage = () => {
       try {
         const response = await signup(data.name, data.email, data.password);
         console.log("Signup successful:", response);
-        // Update auth context
-        authLogin(response, response.token);
-        // Redirect to dashboard or home page
+        // Update auth context with access token and user data
+        authLogin(response.user, response.accessToken);
+        // Redirect to login page
         navigate("/login");
       } catch (error) {
         setErrors({ general: error.message });

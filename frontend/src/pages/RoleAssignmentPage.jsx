@@ -2,18 +2,21 @@ import React, { useState, useEffect } from "react";
 import UserRoleTable from "../components/RoleAssignment/UserRoleTable";
 import { useAuth } from "../context/AuthContext";
 import { fetchUsers, updateUserRoles } from "../services/userService";
+import { useNavigate } from "react-router-dom";
 
 const RoleAssignmentPage = () => {
-  const { user: currentUser } = useAuth(); // Get the currently logged-in user
-  const [users, setUsers] = useState([]); // State to store users
-  const [jpts] = useState(["Manager", "Developer", "admin", "Analyst"]); // Available roles
-  const [selectedRoles, setSelectedRoles] = useState({}); // Track selected roles for each user
+  const { user: currentUser, logout } = useAuth();
+  const [users, setUsers] = useState([]);
+  const [jpts] = useState(["Manager", "Developer", "admin", "Analyst"]);
+  const [selectedRoles, setSelectedRoles] = useState({});
+  const navigate = useNavigate();
 
   // Fetch users from the backend
   useEffect(() => {
     const fetchUsersData = async () => {
       try {
-        const data = await fetchUsers(currentUser.token);
+        const token = localStorage.getItem("accessToken");
+        const data = await fetchUsers(token);
         const filteredUsers = data.filter((user) => user._id !== currentUser._id);
         setUsers(filteredUsers);
 
@@ -49,13 +52,14 @@ const RoleAssignmentPage = () => {
   // Save all role changes
   const saveRoleChanges = async () => {
     try {
+      const token = localStorage.getItem("accessToken");
       for (const userId in selectedRoles) {
         const roles = selectedRoles[userId];
-        await updateUserRoles(userId, roles, currentUser.token);
+        await updateUserRoles(userId, roles, token);
       }
 
       // Fetch updated users after saving changes
-      const data = await fetchUsers(currentUser.token);
+      const data = await fetchUsers(token);
       const filteredUsers = data.filter((user) => user._id !== currentUser._id);
       setUsers(filteredUsers);
 
@@ -66,11 +70,23 @@ const RoleAssignmentPage = () => {
     }
   };
 
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-semibold text-gray-900 mb-6">
         Role Assignment
       </h1>
+      <button
+        onClick={handleLogout}
+        className="absolute top-4 right-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+      >
+        Logout
+      </button>
       <UserRoleTable
         users={users}
         jpts={jpts}

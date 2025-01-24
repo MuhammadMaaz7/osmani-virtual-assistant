@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Import Link
+import { Link, useNavigate } from "react-router-dom";
 import AuthForm from "../components/SignupLogin/AuthForm";
 import { login } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
@@ -15,7 +15,7 @@ const LoginPage = () => {
     if (!data.email || !/\S+@\S+\.\S+/.test(data.email)) {
       newErrors.email = "Please enter a valid email address.";
     }
-    if (!data.password || data.password.length < 2) {
+    if (!data.password || data.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters.";
     }
 
@@ -26,8 +26,18 @@ const LoginPage = () => {
       try {
         const response = await login(data.email, data.password);
         console.log("Login successful:", response);
-        // Update auth context
-        authLogin(response, response.token);
+
+        // Extract userData and token from the response
+        const userData = {
+          _id: response._id,
+          name: response.name,
+          email: response.email,
+          roles: response.roles,
+        };
+        const token = response.accessToken;
+
+        // Update auth context with userData and token
+        authLogin(userData, token);
 
         // Redirect based on role
         if (response.roles.includes("admin")) {
