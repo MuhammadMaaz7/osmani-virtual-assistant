@@ -1,10 +1,12 @@
-// backend/middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
 
 // Middleware to verify JWT token
 export const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1]; // Get token from header
+  let token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    token = req.cookies.refreshToken;
+  }
 
   if (!token) {
     return res.status(401).json({ message: "Access denied. No token provided." });
@@ -15,6 +17,7 @@ export const verifyToken = (req, res, next) => {
     req.user = decoded; // Attach user data to the request
     next();
   } catch (error) {
+    console.error("Token verification error:", error);
     res.status(400).json({ message: "Invalid token." });
   }
 };
