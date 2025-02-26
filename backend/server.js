@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import askRoutes from "./routes/askRoutes.js"; // Import the new routes
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ connectDB();
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api", askRoutes); // Add the new routes
 
 // Start the server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -5,13 +5,15 @@ import ChatHeader from '../components/Chat/ChatHeader';
 import ChatMessages from '../components/Chat/ChatMessages';
 import ChatInput from '../components/Chat/ChatInput';
 import QuickPrompts from '../components/Chat/QuickPrompts';
-import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { useAuth } from '../context/AuthContext';
+import { askQuestion } from '../services/askService'; // Import the service function
 
 export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Sidebar state
-  const { user, isAuthenticated, logout } = useAuth(); // Use AuthContext
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [conversationHistory, setConversationHistory] = useState([]); // Add conversation history
+  const { user, isAuthenticated, logout } = useAuth();
 
   const handleSend = async (message) => {
     if (!message.trim()) return;
@@ -20,17 +22,28 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, newMessage]);
     setIsLoading(true);
 
-    // Simulate AI response - replace with actual API call
-    setTimeout(() => {
+    try {
+      // Call the API to get the AI response
+      const response = await askQuestion(message, conversationHistory);
+      const { answer, conversation_history } = response;
+
+      // Update conversation history
+      setConversationHistory(conversation_history);
+
+      // Add the assistant's response to messages
       setMessages((prev) => [
         ...prev,
-        {
-          type: 'assistant',
-          content: 'This is a sample response from the Osmani AI Assistant.',
-        },
+        { type: 'assistant', content: answer },
       ]);
+    } catch (error) {
+      console.error("Error fetching answer:", error);
+      setMessages((prev) => [
+        ...prev,
+        { type: 'assistant', content: "Sorry, I couldn't fetch the answer. Please try again." },
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handlePromptSelect = (prompt) => {
@@ -71,9 +84,9 @@ export default function ChatPage() {
         <ChatHeader
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
           isSidebarOpen={isSidebarOpen}
-          isLoggedIn={isAuthenticated} // Pass isAuthenticated
-          user={user} // Pass user data
-          onLogout={logout} // Pass logout function
+          isLoggedIn={isAuthenticated}
+          user={user}
+          onLogout={logout}
         />
 
         {/* Chat Content */}
@@ -88,7 +101,7 @@ export default function ChatPage() {
                 <QuickPrompts onPromptSelect={handlePromptSelect} />
               </div>
             ) : (
-              <ChatMessages messages={messages} />
+              <ChatMessages messages={messages} isLoading={isLoading} />
             )}
           </div>
 
